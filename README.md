@@ -11,16 +11,16 @@ install performs one automatic scan; after that, scanning is manual only.
 
 **English** | [中文](README.zh-CN.md)
 
-**Download:** grab the portable Windows build from
-[Releases](https://github.com/Dabendi/cinecase/releases/latest).
+**Download:** portable builds for Windows x64 and macOS (Apple Silicon / Intel)
+are in [Releases](https://github.com/Dabendi/cinecase/releases/latest).
 
 ## Features
 
 - **Automatic first scan, then manual only** — a fresh install runs one scan;
   every later refresh comes from the **Scan now** button. No background patrol.
 - **Local web UI** — `http://127.0.0.1:8765`.
-- **Optional native desktop window** — a WebView2 shell around the same UI,
-  built with pywebview; see [Desktop app](#desktop-app-windows).
+- **Optional native desktop window** — WebView2 on Windows, WebKit on macOS,
+  around the same UI; see [Desktop app](#desktop-app-windows-and-macos).
 - **Bilingual interface** — English by default, one-click Chinese toggle; the
   choice is remembered in the browser.
 - **Metadata via ffprobe** — duration, resolution, frame rate, video/audio
@@ -49,41 +49,68 @@ install performs one automatic scan; after that, scanning is manual only.
 - A modern browser.
 
 The Python server and scanner also run on macOS/Linux if you start them
-manually. The browser-open action uses `open` / `xdg-open` there. The desktop
-build is Windows-only. The web app itself has no pip dependencies; the desktop
-build uses `pywebview` and `pyinstaller`.
+manually. The browser-open action uses `open` / `xdg-open` there. The web app
+itself has no pip dependencies; the desktop builds use `pywebview` and
+`pyinstaller`.
 
-## Desktop app (Windows)
+## Desktop app (Windows and macOS)
 
-The same backend and UI can run inside a native WebView2 window. Build it with:
+The same backend and UI can run inside a native desktop window: WebView2 on
+Windows, WebKit on macOS. The portable builds bundle CPython, web assets, and
+**ffmpeg/ffprobe**, so recipients do not need Python or ffmpeg installed.
+
+### Windows
 
 ```powershell
 .\build-desktop.ps1
 .\dist\CineCase\CineCase.exe
 ```
 
-The portable release bundles the CPython runtime, web assets, **ffmpeg/ffprobe**
-(LGPL shared build), and the **WebView2 Evergreen Bootstrapper**, so recipients
-do not need Python or ffmpeg installed.
-
-Build requirements: Python 3.10+. The build script downloads the LGPL ffmpeg
-build and the WebView2 bootstrapper once, then produces a portable
-`dist\CineCase` folder (about 340 MB, zipped to about 146 MB).
+The Windows build also bundles the **WebView2 Evergreen Bootstrapper**. Build
+requirements: Python 3.10+. The script downloads the LGPL ffmpeg build and the
+WebView2 bootstrapper once, then produces `dist\CineCase` (about 340 MB,
+zipped to about 146 MB).
 
 Windows 11 includes WebView2. On Windows 10, if the runtime is missing, the app
 offers to run the bundled bootstrapper (it needs internet for the download).
-The first launch performs one automatic scan; edit `config.json` before that
-first launch if you want to choose folders in advance.
-
 By default the portable app stores `config.json`, `data/`, `thumbs/`,
 `strips/`, and the WebView profile next to `CineCase.exe`. If that folder is
 not writable, it falls back to `%LOCALAPPDATA%\CineCase`.
 
-To make the desktop app share the same library as the web version, create
-`cinehome.txt` next to `CineCase.exe` and write the library folder path into
-it. The desktop launcher will use that directory for config and data. Run only
-one server on the same port at a time; if one is already running, the desktop
-window reuses it instead of starting another.
+To share the same library as the web version, create `cinehome.txt` next to
+`CineCase.exe` and write the library folder path into it.
+
+### macOS
+
+The prebuilt macOS zips are produced by the **macOS desktop build** GitHub
+Actions workflow: one for Apple Silicon (`arm64`) and one for Intel (`x64`).
+
+```bash
+chmod +x build-macos.sh
+./build-macos.sh
+```
+
+The script downloads static ffmpeg/ffprobe, builds `CineCase.app`, ad-hoc signs
+it, and writes `dist/CineCase-macos-<arch>.zip`. macOS uses the system WebKit;
+no WebView2 is needed.
+
+The macOS app is **ad-hoc signed, not notarized** because no Apple Developer
+certificate is available. The first launch needs one extra step: right-click
+`CineCase.app` → **Open** → **Open**, or run once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/CineCase.app
+```
+
+Data lives in `~/Library/Application Support/CineCase` (`config.json`, `data/`,
+`thumbs/`, `strips/`, `webview/`). The first launch auto-scans once; edit the
+config there before launching if you want to choose folders in advance.
+
+### First launch and ports
+
+Both desktop builds perform one automatic scan on a fresh install; after that,
+scanning is manual. Run only one server on the same port at a time; if one is
+already running, the desktop window reuses it instead of starting another.
 
 ## Quick start
 

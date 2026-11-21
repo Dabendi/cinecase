@@ -1,0 +1,120 @@
+name: macOS desktop build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-arm64:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          chmod +x build-macos.sh
+          ./build-macos.sh
+      - name: Smoke test bundled scanner
+        run: |
+          set -euo pipefail
+          APP="dist/CineCase.app/Contents/MacOS/CineCase"
+          FF=$(find dist/CineCase.app -type f -name ffmpeg | head -1)
+          TMP=$(mktemp -d)
+          mkdir "$TMP/media"
+          "$FF" -hide_banner -loglevel error -y \
+            -f lavfi -i "color=c=0x224466:s=320x180:d=1" \
+            -c:v mpeg4 "$TMP/media/test.mp4"
+          cat > "$TMP/config.json" <<EOF
+          {
+            "port": 8799,
+            "ffmpeg": "ffmpeg",
+            "ffprobe": "ffprobe",
+            "roots": [
+              { "label": "Test", "path": "$TMP/media", "min_size_mb": 0 }
+            ]
+          }
+          EOF
+          CINE_HOME="$TMP" "$APP" --scanner --watch >/dev/null 2>&1 &
+          PID=$!
+          for i in $(seq 1 60); do
+            if [ -f "$TMP/data/status.json" ] && \
+               grep -q '"phase": "idle"' "$TMP/data/status.json" && \
+               grep -q '"last_scan_at"' "$TMP/data/status.json"; then
+              break
+            fi
+            sleep 1
+          done
+          kill "$PID" 2>/dev/null || true
+          python3 - "$TMP" <<'PY'
+          import os, sqlite3, sys
+          tmp = sys.argv[1]
+          db = os.path.join(tmp, "data", "library.db")
+          c = sqlite3.connect(db)
+          rows = c.execute("select count(*) from media").fetchone()[0]
+          assert rows == 1, f"expected 1 row, got {rows}"
+          print("smoke test ok; rows =", rows)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: dist/CineCase-macos-arm64.zip
+
+  macos-x64:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          chmod +x build-macos.sh
+          ./build-macos.sh
+      - name: Smoke test bundled scanner
+        run: |
+          set -euo pipefail
+          APP="dist/CineCase.app/Contents/MacOS/CineCase"
+          FF=$(find dist/CineCase.app -type f -name ffmpeg | head -1)
+          TMP=$(mktemp -d)
+          mkdir "$TMP/media"
+          "$FF" -hide_banner -loglevel error -y \
+            -f lavfi -i "color=c=0x224466:s=320x180:d=1" \
+            -c:v mpeg4 "$TMP/media/test.mp4"
+          cat > "$TMP/config.json" <<EOF
+          {
+            "port": 8799,
+            "ffmpeg": "ffmpeg",
+            "ffprobe": "ffprobe",
+            "roots": [
+              { "label": "Test", "path": "$TMP/media", "min_size_mb": 0 }
+            ]
+          }
+          EOF
+          CINE_HOME="$TMP" "$APP" --scanner --watch >/dev/null 2>&1 &
+          PID=$!
+          for i in $(seq 1 60); do
+            if [ -f "$TMP/data/status.json" ] && \
+               grep -q '"phase": "idle"' "$TMP/data/status.json" && \
+               grep -q '"last_scan_at"' "$TMP/data/status.json"; then
+              break
+            fi
+            sleep 1
+          done
+          kill "$PID" 2>/dev/null || true
+          python3 - "$TMP" <<'PY'
+          import os, sqlite3, sys
+          tmp = sys.argv[1]
+          db = os.path.join(tmp, "data", "library.db")
+          c = sqlite3.connect(db)
+          rows = c.execute("select count(*) from media").fetchone()[0]
+          assert rows == 1, f"expected 1 row, got {rows}"
+          print("smoke test ok; rows =", rows)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-x64
+          path: dist/CineCase-macos-x64.zip

@@ -19,6 +19,7 @@
   ],
   "roots": [
     { "label": "Videos", "path": "~/Videos", "min_size_mb": 0 },
+    { "label": "Movies", "path": "~/Movies", "min_size_mb": 0 },
     { "label": "Downloads", "path": "~/Downloads", "min_size_mb": 1 }
   ]
 }

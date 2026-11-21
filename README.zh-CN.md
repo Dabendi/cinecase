@@ -8,7 +8,7 @@
 
 [English](README.md) | **中文**
 
-**直接下载**：Windows 便携版在
+**直接下载**：Windows x64 和 macOS（Apple Silicon / Intel）便携版都在
 [Releases](https://github.com/Dabendi/cinecase/releases/latest)。
 
 ## 功能
@@ -16,8 +16,8 @@
 - **首次自动、之后手动**：首次部署自动跑一遍；之后只有点「手动巡检」才会扫描，
   没有后台定时巡检。
 - **本地网页**：`http://127.0.0.1:8765`。
-- **可选桌面窗口**：用 pywebview / WebView2 把同一套界面装进原生窗口，见
-  [桌面应用](#桌面应用windows)。
+- **可选桌面窗口**：Windows 用 WebView2、macOS 用系统 WebKit，把同一套界面装进
+  原生窗口，见 [桌面应用](#桌面应用windows-和-macos)。
 - **中英文界面**：默认英文，右上角一键切换中文；选择会记住。
 - **ffprobe 元数据**：时长、分辨率、帧率、视频/音频编码、码率。
 - **封面与接触印样**：每个视频生成 640px 封面和 3×2 六格印样；音频生成波形封面。
@@ -37,34 +37,58 @@
 - 现代浏览器。
 
 Python 核心也能在 macOS/Linux 上手动运行；打开文件时会使用 `open` / `xdg-open`。
-桌面版仅支持 Windows。网页版本身没有 pip 依赖；桌面构建使用 `pywebview` 和
-`pyinstaller`。
+网页版本身没有 pip 依赖；桌面构建使用 `pywebview` 和 `pyinstaller`。
 
-## 桌面应用（Windows）
+## 桌面应用（Windows 和 macOS）
 
-同一套后端和界面可以装进 WebView2 原生窗口：
+同一套后端和界面可以装进原生窗口：Windows 用 WebView2，macOS 用系统 WebKit。
+便携版内置 CPython、网页资源和 **ffmpeg/ffprobe**，别人不需要装 Python 或 ffmpeg。
+
+### Windows
 
 ```powershell
 .\build-desktop.ps1
 .\dist\CineCase\CineCase.exe
 ```
 
-便携版已经内置 **Python 运行时、网页资源、ffmpeg/ffprobe（LGPL shared build）
-和 WebView2 Evergreen Bootstrapper**，别人不需要装 Python 或 ffmpeg。
-
-构建需要 Python 3.10+。脚本会自动下载 LGPL ffmpeg 和 WebView2 安装引导程序，
-然后在 `dist\CineCase` 生成便携版（约 340 MB，压缩后约 146 MB）。
+Windows 版还会内置 **WebView2 Evergreen Bootstrapper**。构建需要 Python 3.10+；
+脚本会下载 LGPL ffmpeg 和 WebView2 安装引导程序，然后在 `dist\CineCase`
+生成便携版（约 340 MB，压缩后约 146 MB）。
 
 Windows 11 自带 WebView2；Windows 10 如果缺失，应用会提示运行随附的安装引导
-程序（需要联网下载运行时）。首次启动会自动巡检一次；如果想在首次扫描前选好
-目录，先编辑 `config.json` 再启动。
+程序（需要联网下载运行时）。便携版默认把 `config.json`、`data/`、`thumbs/`、
+`strips/` 和 WebView 配置放在 `CineCase.exe` 同目录；如果目录不可写，会退回
+`%LOCALAPPDATA%\CineCase`。想让桌面版和网页版共用同一个库，在
+`CineCase.exe` 旁创建 `cinehome.txt`，写入库目录的绝对路径。
 
-便携版默认把 `config.json`、`data/`、`thumbs/`、`strips/` 和 WebView 配置放在
-`CineCase.exe` 同目录；如果目录不可写，会退回 `%LOCALAPPDATA%\CineCase`。
+### macOS
 
-想让桌面版和网页版共用同一个库，在 `CineCase.exe` 旁创建 `cinehome.txt`，
-里面写库目录的绝对路径即可。同一端口同时只能跑一个服务；如果已有服务在运行，
-桌面窗口会直接复用它。
+预构建的 macOS 包由 GitHub Actions 的 **macOS desktop build** 生成，分
+Apple Silicon（arm64）和 Intel（x64）两个 zip。
+
+```bash
+chmod +x build-macos.sh
+./build-macos.sh
+```
+
+脚本会下载静态 ffmpeg/ffprobe、构建 `CineCase.app`、做 ad-hoc 签名，并生成
+`dist/CineCase-macos-<arch>.zip`。macOS 使用系统 WebKit，不需要 WebView2。
+
+因为目前没有 Apple Developer 证书，macOS 包是 **ad-hoc 签名、未公证**的。
+首次打开需要右键 `CineCase.app` → **打开** → **打开**，或在终端执行一次：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/CineCase.app
+```
+
+数据在 `~/Library/Application Support/CineCase`（`config.json`、`data/`、
+`thumbs/`、`strips/`、`webview/`）。首次启动自动巡检一次；想提前选目录，
+先在该目录放好 `config.json` 再启动。
+
+### 首次启动与端口
+
+两种桌面版在全新安装时都会自动巡检一次，之后手动扫描。同一端口同时只能跑
+一个服务；如果已有服务在运行，桌面窗口会直接复用它。
 
 ## 快速开始
 

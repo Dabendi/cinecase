@@ -33,6 +33,8 @@ def choose_home() -> Path:
     env = os.environ.get("CINE_HOME")
     if env:
         return Path(env).expanduser().resolve()
+    if FROZEN and sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "CineCase"
     exe_dir = Path(sys.executable).resolve().parent if FROZEN else SOURCE_DIR
     pointer = exe_dir / "cinehome.txt"
     if pointer.exists():
@@ -65,6 +67,19 @@ def message_box(text: str, title: str = "片匣 · CineCase") -> None:
             ctypes.windll.user32.MessageBoxW(None, text, title, 0x10)
         except Exception:
             pass
+    elif sys.platform == "darwin":
+        try:
+            escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+            subprocess.run(
+                [
+                    "osascript", "-e",
+                    f'display dialog "{escaped}" buttons {{"OK"}} '
+                    f'default button 1 with title "{title}"',
+                ],
+                check=False,
+            )
+        except Exception:
+            print(f"{title}: {text}", file=sys.stderr)
     else:
         print(f"{title}: {text}", file=sys.stderr)
 
@@ -247,6 +262,7 @@ def run_desktop() -> int:
             started.append((scanner_proc, scanner_log))
 
         icon_path = RESOURCE_DIR / "assets" / "cinecase.ico"
+        window_icon = str(icon_path) if os.name == "nt" and icon_path.exists() else None
         webview.create_window(
             "片匣 · CineCase",
             f"http://127.0.0.1:{port}/",
@@ -259,7 +275,7 @@ def run_desktop() -> int:
         webview.start(
             private_mode=False,
             storage_path=str(HOME / "webview"),
-            icon=str(icon_path) if icon_path.exists() else None,
+            icon=window_icon,
         )
         return 0
     except Exception as exc:
