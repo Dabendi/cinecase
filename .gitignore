@@ -12,6 +12,7 @@ cinehome.txt
 dist/
 build/
 *.spec
+vendor/
 
 # Python
 __pycache__/

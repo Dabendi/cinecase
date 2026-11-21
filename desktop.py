@@ -92,6 +92,30 @@ def health(port: int) -> bool:
         return False
 
 
+def webview2_installed() -> bool:
+    if os.name != "nt":
+        return True
+    try:
+        import winreg
+        guid = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+        paths = (
+            rf"SOFTWARE\Microsoft\EdgeUpdate\Clients\{guid}",
+            rf"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{guid}",
+        )
+        for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            for path in paths:
+                try:
+                    with winreg.OpenKey(root, path) as key:
+                        version, _ = winreg.QueryValueEx(key, "pv")
+                        if version:
+                            return True
+                except OSError:
+                    pass
+    except Exception:
+        return True
+    return False
+
+
 def spawn(role: str, port: int):
     log_dir = HOME / "data" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -177,6 +201,25 @@ def stop_process(proc: subprocess.Popen) -> None:
 
 
 def run_desktop() -> int:
+    if not webview2_installed():
+        installer = RESOURCE_DIR / "webview2" / "MicrosoftEdgeWebView2Setup.exe"
+        if installer.exists():
+            message_box(
+                "片匣需要 Microsoft Edge WebView2 Runtime。\n\n"
+                "将打开随附的安装程序；安装完成后请重新打开片匣。"
+            )
+            try:
+                subprocess.run([str(installer)], check=False)
+            except Exception:
+                pass
+        else:
+            message_box(
+                "片匣需要 Microsoft Edge WebView2 Runtime。\n\n"
+                "请先安装：\n"
+                "https://developer.microsoft.com/microsoft-edge/webview2/"
+            )
+        return 1
+
     try:
         import webview
     except Exception as exc:

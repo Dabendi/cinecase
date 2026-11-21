@@ -15,6 +15,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -106,6 +107,19 @@ def load_config() -> dict:
     cfg.setdefault("ffmpeg", "ffmpeg")
     cfg.setdefault("ffprobe", "ffprobe")
     cfg.setdefault("default_min_size_mb", 1)
+
+    def resolve_tool(name: str, value) -> str:
+        if value and Path(str(value)).is_file():
+            return str(Path(value))
+        bundled_name = f"{name}.exe" if os.name == "nt" else name
+        bundled = _RESOURCE_DIR / "ffmpeg" / bundled_name
+        if bundled.is_file():
+            return str(bundled)
+        return shutil.which(str(value) if value else name) or str(value or name)
+
+    cfg["ffmpeg"] = resolve_tool("ffmpeg", cfg.get("ffmpeg"))
+    cfg["ffprobe"] = resolve_tool("ffprobe", cfg.get("ffprobe"))
+
     roots = []
     for root in cfg.get("roots", []):
         if not isinstance(root, dict) or not isinstance(root.get("path"), str):

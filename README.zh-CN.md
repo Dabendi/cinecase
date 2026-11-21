@@ -8,6 +8,9 @@
 
 [English](README.md) | **中文**
 
+**直接下载**：Windows 便携版在
+[Releases](https://github.com/Dabendi/cinecase/releases/latest)。
+
 ## 功能
 
 - **首次自动、之后手动**：首次部署自动跑一遍；之后只有点「手动巡检」才会扫描，
@@ -46,9 +49,15 @@ Python 核心也能在 macOS/Linux 上手动运行；打开文件时会使用 `o
 .\dist\CineCase\CineCase.exe
 ```
 
-构建需要 Python 3.10+ 和 WebView2 Runtime（Windows 11 自带；Windows 10 可能需要
-安装 Evergreen WebView2 Runtime）。脚本会创建 `.venv`、安装桌面构建依赖，并在
-`dist\CineCase` 生成便携版（约 30 MB）。
+便携版已经内置 **Python 运行时、网页资源、ffmpeg/ffprobe（LGPL shared build）
+和 WebView2 Evergreen Bootstrapper**，别人不需要装 Python 或 ffmpeg。
+
+构建需要 Python 3.10+。脚本会自动下载 LGPL ffmpeg 和 WebView2 安装引导程序，
+然后在 `dist\CineCase` 生成便携版（约 340 MB，压缩后约 146 MB）。
+
+Windows 11 自带 WebView2；Windows 10 如果缺失，应用会提示运行随附的安装引导
+程序（需要联网下载运行时）。首次启动会自动巡检一次；如果想在首次扫描前选好
+目录，先编辑 `config.json` 再启动。
 
 便携版默认把 `config.json`、`data/`、`thumbs/`、`strips/` 和 WebView 配置放在
 `CineCase.exe` 同目录；如果目录不可写，会退回 `%LOCALAPPDATA%\CineCase`。
@@ -169,6 +178,8 @@ assets/cinecase.ico      桌面图标
 config.example.json      配置模板
 build-desktop.ps1        PyInstaller 桌面构建
 requirements-desktop.txt 桌面构建依赖
+README-FIRST.txt         便携版使用说明
+THIRD_PARTY_NOTICES.md   FFmpeg / WebView2 / Python 第三方声明
 start.ps1 / stop.ps1     Windows 网页服务启停脚本
 ```
 

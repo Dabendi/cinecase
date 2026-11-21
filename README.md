@@ -11,6 +11,9 @@ install performs one automatic scan; after that, scanning is manual only.
 
 **English** | [中文](README.zh-CN.md)
 
+**Download:** grab the portable Windows build from
+[Releases](https://github.com/Dabendi/cinecase/releases/latest).
+
 ## Features
 
 - **Automatic first scan, then manual only** — a fresh install runs one scan;
@@ -59,10 +62,18 @@ The same backend and UI can run inside a native WebView2 window. Build it with:
 .\dist\CineCase\CineCase.exe
 ```
 
-Build requirements: Python 3.10+ and WebView2 Runtime (included with Windows
-11; Windows 10 may need the Evergreen WebView2 Runtime). The script creates
-`.venv`, installs the desktop-only dependencies, and produces a portable
-`dist\CineCase` folder (about 30 MB).
+The portable release bundles the CPython runtime, web assets, **ffmpeg/ffprobe**
+(LGPL shared build), and the **WebView2 Evergreen Bootstrapper**, so recipients
+do not need Python or ffmpeg installed.
+
+Build requirements: Python 3.10+. The build script downloads the LGPL ffmpeg
+build and the WebView2 bootstrapper once, then produces a portable
+`dist\CineCase` folder (about 340 MB, zipped to about 146 MB).
+
+Windows 11 includes WebView2. On Windows 10, if the runtime is missing, the app
+offers to run the bundled bootstrapper (it needs internet for the download).
+The first launch performs one automatic scan; edit `config.json` before that
+first launch if you want to choose folders in advance.
 
 By default the portable app stores `config.json`, `data/`, `thumbs/`,
 `strips/`, and the WebView profile next to `CineCase.exe`. If that folder is
@@ -202,6 +213,8 @@ assets/cinecase.ico      desktop icon
 config.example.json      template
 build-desktop.ps1        PyInstaller desktop build
 requirements-desktop.txt desktop-only build dependencies
+README-FIRST.txt         portable-build readme
+THIRD_PARTY_NOTICES.md   FFmpeg / WebView2 / Python notices
 start.ps1 / stop.ps1     Windows web-service helper scripts
 ```
 
