@@ -1,0 +1,24 @@
+{
+  "port": 8765,
+  "default_min_size_mb": 1,
+  "ffmpeg": "ffmpeg",
+  "ffprobe": "ffprobe",
+  "exclude_names": [
+    "$RECYCLE.BIN",
+    "System Volume Information",
+    "node_modules",
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "site-packages",
+    ".pnpm-store",
+    ".cache",
+    "AppData",
+    "Temp"
+  ],
+  "roots": [
+    { "label": "Videos", "path": "~/Videos", "min_size_mb": 0 },
+    { "label": "Downloads", "path": "~/Downloads", "min_size_mb": 1 }
+  ]
+}

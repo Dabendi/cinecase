@@ -1,0 +1,18 @@
+# Local configuration and generated data
+config.json
+data/
+thumbs/
+strips/
+screenshots/
+.playwright-mcp/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
