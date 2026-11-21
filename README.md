@@ -16,6 +16,8 @@ install performs one automatic scan; after that, scanning is manual only.
 - **Automatic first scan, then manual only** — a fresh install runs one scan;
   every later refresh comes from the **Scan now** button. No background patrol.
 - **Local web UI** — `http://127.0.0.1:8765`.
+- **Optional native desktop window** — a WebView2 shell around the same UI,
+  built with pywebview; see [Desktop app](#desktop-app-windows).
 - **Bilingual interface** — English by default, one-click Chinese toggle; the
   choice is remembered in the browser.
 - **Metadata via ffprobe** — duration, resolution, frame rate, video/audio
@@ -44,7 +46,33 @@ install performs one automatic scan; after that, scanning is manual only.
 - A modern browser.
 
 The Python server and scanner also run on macOS/Linux if you start them
-manually. The browser-open action uses `open` / `xdg-open` there.
+manually. The browser-open action uses `open` / `xdg-open` there. The desktop
+build is Windows-only. The web app itself has no pip dependencies; the desktop
+build uses `pywebview` and `pyinstaller`.
+
+## Desktop app (Windows)
+
+The same backend and UI can run inside a native WebView2 window. Build it with:
+
+```powershell
+.\build-desktop.ps1
+.\dist\CineCase\CineCase.exe
+```
+
+Build requirements: Python 3.10+ and WebView2 Runtime (included with Windows
+11; Windows 10 may need the Evergreen WebView2 Runtime). The script creates
+`.venv`, installs the desktop-only dependencies, and produces a portable
+`dist\CineCase` folder (about 30 MB).
+
+By default the portable app stores `config.json`, `data/`, `thumbs/`,
+`strips/`, and the WebView profile next to `CineCase.exe`. If that folder is
+not writable, it falls back to `%LOCALAPPDATA%\CineCase`.
+
+To make the desktop app share the same library as the web version, create
+`cinehome.txt` next to `CineCase.exe` and write the library folder path into
+it. The desktop launcher will use that directory for config and data. Run only
+one server on the same port at a time; if one is already running, the desktop
+window reuses it instead of starting another.
 
 ## Quick start
 
@@ -164,13 +192,17 @@ file open, the API returns `in_use` and the UI asks you to close it first.
 ## Project layout
 
 ```
-scan.py              background indexer (scan, ffprobe, covers, strips, dedupe)
-server.py            local web server (UI, JSON API, Range streaming, delete)
-web/index.html       UI shell
-web/app.js           UI logic + EN/ZH i18n
-web/style.css        archival cinema theme
-config.example.json  template
-start.ps1 / stop.ps1 Windows helper scripts
+scan.py                  background indexer (scan, ffprobe, covers, strips, dedupe)
+server.py                local web server (UI, JSON API, Range streaming, delete)
+desktop.py               optional pywebview / WebView2 desktop launcher
+web/index.html           UI shell
+web/app.js               UI logic + EN/ZH i18n
+web/style.css            archival cinema theme
+assets/cinecase.ico      desktop icon
+config.example.json      template
+build-desktop.ps1        PyInstaller desktop build
+requirements-desktop.txt desktop-only build dependencies
+start.ps1 / stop.ps1     Windows web-service helper scripts
 ```
 
 ## License

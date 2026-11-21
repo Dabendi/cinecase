@@ -23,7 +23,10 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent
+_SOURCE_DIR = Path(__file__).resolve().parent
+_RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", _SOURCE_DIR))
+BASE = Path(os.environ.get("CINE_HOME", _SOURCE_DIR)).resolve()
+CONFIG_EXAMPLE = _RESOURCE_DIR / "config.example.json"
 DATA = BASE / "data"
 THUMBS = BASE / "thumbs"
 STRIPS = BASE / "strips"
@@ -92,7 +95,7 @@ def write_json_atomic(path: Path, obj) -> None:
 
 def load_config() -> dict:
     if not CFG_PATH.exists():
-        example = BASE / "config.example.json"
+        example = CONFIG_EXAMPLE
         if not example.exists():
             raise FileNotFoundError(
                 "config.json is missing and config.example.json was not found"

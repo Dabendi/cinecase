@@ -5,6 +5,13 @@ thumbs/
 strips/
 screenshots/
 .playwright-mcp/
+webview/
+cinehome.txt
+
+# Desktop build output
+dist/
+build/
+*.spec
 
 # Python
 __pycache__/

@@ -13,6 +13,8 @@
 - **首次自动、之后手动**：首次部署自动跑一遍；之后只有点「手动巡检」才会扫描，
   没有后台定时巡检。
 - **本地网页**：`http://127.0.0.1:8765`。
+- **可选桌面窗口**：用 pywebview / WebView2 把同一套界面装进原生窗口，见
+  [桌面应用](#桌面应用windows)。
 - **中英文界面**：默认英文，右上角一键切换中文；选择会记住。
 - **ffprobe 元数据**：时长、分辨率、帧率、视频/音频编码、码率。
 - **封面与接触印样**：每个视频生成 640px 封面和 3×2 六格印样；音频生成波形封面。
@@ -32,6 +34,28 @@
 - 现代浏览器。
 
 Python 核心也能在 macOS/Linux 上手动运行；打开文件时会使用 `open` / `xdg-open`。
+桌面版仅支持 Windows。网页版本身没有 pip 依赖；桌面构建使用 `pywebview` 和
+`pyinstaller`。
+
+## 桌面应用（Windows）
+
+同一套后端和界面可以装进 WebView2 原生窗口：
+
+```powershell
+.\build-desktop.ps1
+.\dist\CineCase\CineCase.exe
+```
+
+构建需要 Python 3.10+ 和 WebView2 Runtime（Windows 11 自带；Windows 10 可能需要
+安装 Evergreen WebView2 Runtime）。脚本会创建 `.venv`、安装桌面构建依赖，并在
+`dist\CineCase` 生成便携版（约 30 MB）。
+
+便携版默认把 `config.json`、`data/`、`thumbs/`、`strips/` 和 WebView 配置放在
+`CineCase.exe` 同目录；如果目录不可写，会退回 `%LOCALAPPDATA%\CineCase`。
+
+想让桌面版和网页版共用同一个库，在 `CineCase.exe` 旁创建 `cinehome.txt`，
+里面写库目录的绝对路径即可。同一端口同时只能跑一个服务；如果已有服务在运行，
+桌面窗口会直接复用它。
 
 ## 快速开始
 
@@ -135,13 +159,17 @@ python3 scan.py --watch
 ## 文件结构
 
 ```
-scan.py              后台索引器（扫描、ffprobe、封面、印样、重复检测）
-server.py            本地 Web 服务（UI、JSON API、Range 播放、删除）
-web/index.html       页面结构
-web/app.js           前端逻辑 + 中英文 i18n
-web/style.css        胶片档案风格的样式
-config.example.json  配置模板
-start.ps1 / stop.ps1 Windows 启停脚本
+scan.py                  后台索引器（扫描、ffprobe、封面、印样、重复检测）
+server.py                本地 Web 服务（UI、JSON API、Range 播放、删除）
+desktop.py               可选桌面启动器（pywebview / WebView2）
+web/index.html           页面结构
+web/app.js               前端逻辑 + 中英文 i18n
+web/style.css            胶片档案风格的样式
+assets/cinecase.ico      桌面图标
+config.example.json      配置模板
+build-desktop.ps1        PyInstaller 桌面构建
+requirements-desktop.txt 桌面构建依赖
+start.ps1 / stop.ps1     Windows 网页服务启停脚本
 ```
 
 ## License
