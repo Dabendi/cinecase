@@ -56,11 +56,11 @@ if (-not $scannerRunning -and (Test-Path "$root\data\status.json")) {
 
 if (-not $scannerRunning) {
     Start-Process -FilePath $python `
-        -ArgumentList @("-X", "utf8", "scan.py", "--watch", "--no-initial") `
+        -ArgumentList @("-X", "utf8", "scan.py", "--watch") `
         -WorkingDirectory $root -WindowStyle Hidden `
         -RedirectStandardOutput "$root\data\logs\scanner.out.log" `
         -RedirectStandardError "$root\data\logs\scanner.err.log"
-    Write-Host "已启动后台索引器（只读扫描，低优先级）"
+    Write-Host "已启动后台索引器（首次部署会自动巡检一次，之后手动）"
 } else {
     Write-Host "后台索引器已在运行"
 }

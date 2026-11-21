@@ -138,6 +138,18 @@ def load_last_scan(conn: sqlite3.Connection) -> float | None:
     return None
 
 
+def has_completed_scan(conn: sqlite3.Connection) -> bool:
+    try:
+        row = conn.execute(
+            """SELECT 1 FROM meta
+               WHERE key = 'last_scan_at'
+                 AND value IS NOT NULL AND value != ''"""
+        ).fetchone()
+        return row is not None
+    except sqlite3.Error:
+        return False
+
+
 def save_last_scan(conn: sqlite3.Connection, ts: float) -> None:
     conn.execute(
         """INSERT INTO meta(key, value) VALUES('last_scan_at', ?)
@@ -1035,9 +1047,15 @@ def main() -> int:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
     ap = argparse.ArgumentParser(description="片匣后台索引器")
-    ap.add_argument("--watch", action="store_true", help="常驻并等待手动巡检")
+    ap.add_argument(
+        "--watch", action="store_true",
+        help="常驻；首次部署自动巡检一次，之后等待手动巡检",
+    )
     ap.add_argument("--once", action="store_true", help="只跑一轮")
-    ap.add_argument("--no-initial", action="store_true", help="启动时不扫描，直接待命")
+    ap.add_argument(
+        "--no-initial", action="store_true",
+        help="即使首次部署也不做启动扫描",
+    )
     ap.add_argument("--only-root", help="只处理指定根目录标签（调试用）")
     ap.add_argument("--limit", type=int, help="每个阶段最多处理 N 项（调试用）")
     args = ap.parse_args()
@@ -1050,6 +1068,7 @@ def main() -> int:
     PID_PATH.write_text(str(os.getpid()), encoding="ascii")
     st = State()
     st.last_scan_at = load_last_scan(conn)
+    first_run = not has_completed_scan(conn)
 
     try:
         if args.only_root:
@@ -1057,8 +1076,13 @@ def main() -> int:
             process_pending(conn, cfg, st, args.only_root, args.limit)
         elif args.no_initial:
             log("跳过启动扫描，等待手动巡检")
-        else:
+        elif args.once:
             full_pass(conn, cfg, st, None, args.limit)
+        elif first_run:
+            log("首次部署：自动执行一次巡检")
+            full_pass(conn, cfg, st, None, args.limit)
+        else:
+            log("已有索引，跳过启动扫描，等待手动巡检")
         if args.watch:
             watch_loop(conn, cfg, st, args.only_root, args.limit)
         else:

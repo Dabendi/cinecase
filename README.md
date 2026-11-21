@@ -6,14 +6,15 @@ Point it at the folders you care about, press **Scan now**, and it builds a
 private library with cover thumbnails, six-frame contact sheets, duration and
 codec metadata, duplicate detection, search, and in-browser playback.
 
-Everything runs on your machine. The app binds to `127.0.0.1` only, and it
-never scans automatically.
+Everything runs on your machine. The app binds to `127.0.0.1` only. A fresh
+install performs one automatic scan; after that, scanning is manual only.
 
 **English** | [中文](README.zh-CN.md)
 
 ## Features
 
-- **Manual scans only** — no background patrol, no surprise disk I/O.
+- **Automatic first scan, then manual only** — a fresh install runs one scan;
+  every later refresh comes from the **Scan now** button. No background patrol.
 - **Local web UI** — `http://127.0.0.1:8765`.
 - **Bilingual interface** — English by default, one-click Chinese toggle; the
   choice is remembered in the browser.
@@ -53,12 +54,15 @@ cd cinecase
 .\start.ps1
 ```
 
-`start.ps1` starts the web server and a waiting indexer, then opens
-`http://127.0.0.1:8765`.
+`start.ps1` starts the web server and the indexer, then opens
+`http://127.0.0.1:8765`. On a fresh install the indexer performs one automatic
+scan and then waits for manual scans.
 
 On first run, `config.json` is created from `config.example.json` if it does
-not exist. Edit `config.json` to point at your media folders, save, then press
-**Scan now** in the UI. Stop everything with:
+not exist, and the automatic first scan uses those example roots. To have the
+first scan use your own folders, copy `config.example.json` to `config.json`
+and edit `roots` before starting. After that, edit `config.json`, save, and
+press **Scan now** in the UI. Stop everything with:
 
 ```powershell
 .\stop.ps1
@@ -68,10 +72,11 @@ macOS / Linux:
 
 ```bash
 python3 server.py
-python3 scan.py --watch --no-initial
+python3 scan.py --watch
 ```
 
-Then open `http://127.0.0.1:8765` and press **Scan now**.
+Then open `http://127.0.0.1:8765`. The first start auto-scans once; press
+**Scan now** for later refreshes.
 
 ## Configuration
 
@@ -100,10 +105,15 @@ Then open `http://127.0.0.1:8765` and press **Scan now**.
   server (`stop.ps1` / `start.ps1`); other settings are re-read on the next
   manual scan.
 
-Add or change directories, save, and press **Scan now**. New files are picked
-up on the next manual scan; the indexer never runs on a timer.
+A fresh install performs one automatic scan. After that, add or change
+directories, save, and press **Scan now**; new files are picked up on the next
+manual scan. There is no timer.
 
 ## How it works
+
+On startup, if no completed scan is recorded yet, the indexer runs the
+pipeline once automatically. Later startups stay idle until **Scan now** is
+pressed.
 
 1. **Scan** — walk the configured roots, ignore excluded folders, and record
    media files above each root's size threshold.
@@ -147,7 +157,8 @@ file open, the API returns `in_use` and the UI asks you to close it first.
 
 - Browser playback depends on the browser's codec support. MKV/FLV/AVI/H.265
   files may open via the local player instead.
-- Scanning is deliberately manual; there is no scheduled patrol.
+- Scanning is manual after the one automatic first-run pass; there is no
+  scheduled patrol.
 - The PowerShell scripts are Windows-only. The Python core is portable.
 
 ## Project layout
